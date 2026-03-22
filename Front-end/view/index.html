@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Gestión - Index</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Panel de Consultas (Solo visualización)</h1>
+
+        <div class="nav-buttons">
+            <a href="registrarUsers.html" class="btn btn-primary">Usuarios</a>
+            <a href="registrarProducts.html" class="btn btn-success">Productos</a>
+        </div>
+
+        <h2>Registro Rápido (Orden de Usuario)</h2>
+        <form id="indexOrderForm" class="mb-4">
+            <div class="row">
+                <div class="col-md-4 form-group">
+                    <label for="userSelect">Usuario</label>
+                    <input type="text" id="userSelect" list="userList" class="form-control" required placeholder="Escribe para buscar usuario">
+                    <datalist id="userList"></datalist>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label for="productSelect">Producto</label>
+                    <input type="text" id="productSelect" list="productList" class="form-control" required placeholder="Escribe para buscar producto">
+                    <datalist id="productList"></datalist>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label for="orderQuantity">Cantidad</label>
+                    <input id="orderQuantity" type="number" min="1" class="form-control" required>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-4 d-flex align-items-end">
+                    <span id="productStockInfo">Stock disponible: -</span>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <span id="orderTotal">Total: -</span>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Registrar Orden</button>
+                </div>
+            </div>
+        </form>
+
+        <h2>Usuarios Registrados (con Órdenes)</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Edad</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="indexUserTable"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal de Edición de Usuario -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Orden de Usuario</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label for="editUserProduct">Producto</label>
+                    <input type="text" id="editUserProduct" list="editProductList" class="form-control" required placeholder="Escribe para buscar producto">
+                    <datalist id="editProductList"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="editUserQuantity">Cantidad</label>
+                    <input type="number" id="editUserQuantity" class="form-control" required min="1">
+                </div>
+                <button type="submit" class="btn btn-warning">Actualizar Orden</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/const.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/products.js"></script>
+    <script src="../js/users.js"></script>
+
+    <script>
+    async function setupIndex() {
+        await loadProducts();
+        await loadUsers();
+
+        const userInput = document.getElementById('userSelect');
+        const productInput = document.getElementById('productSelect');
+        const quantity = document.getElementById('orderQuantity');
+        const stockInfo = document.getElementById('productStockInfo');
+        const orderTotal = document.getElementById('orderTotal');
+
+        // Llenar datalist de usuarios
+        function fillUserDatalist() {
+            const datalist = document.getElementById('userList');
+            datalist.innerHTML = '';
+            users.forEach(u => {
+                if (u && u.nombre && u.apellido) {
+                    const option = document.createElement('option');
+                    option.value = `${u.nombre} ${u.apellido}`;
+                    datalist.appendChild(option);
+                }
+            });
+        }
+        fillUserDatalist();
+
+        // Llenar datalist de productos
+        function fillProductDatalist() {
+            const datalist = document.getElementById('productList');
+            datalist.innerHTML = '';
+            products.forEach(p => {
+                if (p && p.nombre) {
+                    const option = document.createElement('option');
+                    option.value = p.nombre;
+                    datalist.appendChild(option);
+                }
+            });
+        }
+        fillProductDatalist();
+
+        // Mostrar usuarios con órdenes
+        function displayIndexUsers() {
+            const container = document.getElementById('indexUserTable');
+            container.innerHTML = '';
+            const usersWithOrders = users.filter(u => u && u.producto && u.producto !== '');
+            usersWithOrders.forEach(u => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${u.id}</td>
+                    <td>${u.nombre}</td>
+                    <td>${u.apellido}</td>
+                    <td>${u.correo}</td>
+                    <td>${u.telefono}</td>
+                    <td>${u.edad}</td>
+                    <td>${u.producto}</td>
+                    <td>${u.cantidad}</td>
+                    <td>${u.total}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="openEditUserModal('${u.id}')">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUserOrder('${u.id}')">Borrar</button>
+                    </td>
+                `;
+                container.insertBefore(row, container.firstChild);
+            });
+        }
+        displayIndexUsers();
+
+        function updateOrderInfo() {
+            const selectedProductName = productInput.value;
+            const selectedProduct = products.find(p => p.nombre.toLowerCase() === selectedProductName.toLowerCase());
+            if (!selectedProduct) {
+                stockInfo.textContent = 'Stock disponible: -';
+                orderTotal.textContent = 'Total: -';
+                return;
+            }
+
+            stockInfo.textContent = 'Stock disponible: ' + selectedProduct.stock;
+            const qty = parseInt(quantity.value, 10) || 0;
+            if (qty > selectedProduct.stock) {
+                orderTotal.textContent = 'Total: -- (cantidad supera stock)';
+                return;
+            }
+
+            const total = (qty * selectedProduct.precio).toFixed(2);
+            orderTotal.textContent = 'Total: $' + total;
+        }
+
+        productInput.addEventListener('input', updateOrderInfo);
+        quantity.addEventListener('input', updateOrderInfo);
+
+        document.getElementById('indexOrderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const selectedUserName = userInput.value;
+            const selectedUser = users.find(u => `${u.nombre} ${u.apellido}`.toLowerCase() === selectedUserName.toLowerCase());
+            const selectedProductName = productInput.value;
+            const selectedProduct = products.find(p => p.nombre.toLowerCase() === selectedProductName.toLowerCase());
+            
+            if (!selectedUser) {
+                alert('Usuario no encontrado. Por favor, selecciona un usuario existente.');
+                return;
+            }
+            if (!selectedProduct) {
+                alert('Producto no encontrado. Por favor, selecciona un producto existente.');
+                return;
+            }
+            if (selectedProduct.stock <= 0) {
+                alert('Producto sin stock disponible.');
+                return;
+            }
+
+            const qty = parseInt(quantity.value, 10);
+            if (!qty || qty <= 0) {
+                alert('Cantidad inválida.');
+                return;
+            }
+            if (qty > selectedProduct.stock) {
+                alert('Cantidad supera el stock disponible.');
+                return;
+            }
+
+            // Actualizar usuario con la orden
+            const updatedUser = {
+                ...selectedUser,
+                producto: selectedProduct.nombre,
+                cantidad: qty,
+                total: parseFloat((qty * selectedProduct.precio).toFixed(2))
+            };
+            await queue(`${urlUsers}/${selectedUser.id}`, put, updatedUser);
+
+            // Reducir stock del producto
+            await queue(`${urlProducts}/${selectedProduct.id}`, put, { ...selectedProduct, stock: selectedProduct.stock - qty });
+
+            await loadProducts();
+            await loadUsers();
+            fillUserDatalist();
+            fillProductDatalist();
+            displayIndexUsers();
+            quantity.value = '';
+            this.reset();
+        });
+
+        // Modal de edición de usuario
+        const modal = document.getElementById('editUserModal');
+        const span = modal.querySelector('.close');
+        span.onclick = () => { modal.style.display = 'none'; };
+        window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+        document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editUserId').value;
+            const productName = document.getElementById('editUserProduct').value;
+            const selectedProduct = products.find(p => p.nombre.toLowerCase() === productName.toLowerCase());
+            if (!selectedProduct) return;
+
+            const qty = parseInt(document.getElementById('editUserQuantity').value, 10);
+            if (!qty || qty <= 0) return;
+
+            const user = users.find(u => u.id == id);
+            const updatedUser = {
+                ...user,
+                producto: selectedProduct.nombre,
+                cantidad: qty,
+                total: parseFloat((qty * selectedProduct.precio).toFixed(2))
+            };
+
+            await queue(`${urlUsers}/${id}`, put, updatedUser);
+            modal.style.display = 'none';
+            await loadUsers();
+            displayIndexUsers();
+        });
+    }
+
+    function openEditUserModal(id) {
+        const user = users.find(u => u.id == id);
+        if (!user) return;
+
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editUserProduct').value = user.producto || '';
+        document.getElementById('editUserQuantity').value = user.cantidad || '';
+
+        // Llenar datalist de productos en modal
+        const datalist = document.getElementById('editProductList');
+        datalist.innerHTML = '';
+        products.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.nombre;
+            datalist.appendChild(option);
+        });
+
+        document.getElementById('editUserModal').style.display = 'block';
+    }
+
+    async function deleteUserOrder(id) {
+        if (confirm('¿Estás seguro de que quieres borrar esta orden?')) {
+            const user = users.find(u => u.id == id);
+            if (!user) return;
+            const updatedUser = {
+                ...user,
+                producto: '',
+                cantidad: 0,
+                total: 0
+            };
+            await queue(`${urlUsers}/${id}`, put, updatedUser);
+            await loadUsers();
+            displayIndexUsers();
+            fillUserDatalist();
+        }
+    }
+
+    window.onload = setupIndex;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "id": "6Dfih-4SSBw",
+      "nombre": "jose",
+      "apellido": "caelos",
+      "correo": "jose@gmail.com",
+      "telefono": "1239908124",
+      "edad": 12,
+      "producto": "",
+      "cantidad": 0,
+      "total": 0
+    },
+    {
+      "id": "qD4nt9FFfWA",
+      "nombre": "ale",
+      "apellido": "sal",
+      "correo": "ale@gmail.com",
+      "telefono": "12532234",
+      "edad": 189,
+      "producto": "",
+      "cantidad": 0,
+      "total": 0
+    },
+    {
+      "id": "NVnSfyHh6PU",
+      "nombre": "jose",
+      "apellido": "ale",
+      "correo": "",
+      "telefono": "",
+      "edad": 0,
+      "producto": "",
+      "cantidad": 0,
+      "total": 0
+    }
+  ],
+  "products": [
+    {
+      "id": "TnrTb2l4-c8",
+      "nombre": "Tacos",
+      "precio": 3000,
+      "stock": 0
+    },
+    {
+      "id": "R4kTEKOBP7U",
+      "nombre": "Mortadela",
+      "precio": 2000,
+      "stock": 1
+    },
+    {
+      "id": "3kBgdcPJWCc",
+      "nombre": "Salchichon",
+      "precio": 4000,
+      "stock": 1
+    },
+    {
+      "id": "EqG3B2y-cc0",
+      "nombre": "Maraculla",
+      "precio": 4000,
+      "stock": 4
+    },
+    {
+      "id": "8K1Iui5KMaw",
+      "nombre": "Marron",
+      "precio": 6000,
+      "stock": 6
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
